@@ -1,5 +1,13 @@
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  onSnapshot,
+  query,
+  orderBy 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCzST41AXEo7yL8EPR6rkFAWU9zFBe3evM",
@@ -15,11 +23,47 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// RANDOM USER
+function getUser() {
+  return "User_" + Math.floor(Math.random() * 9999);
+}
 
-async function sendMsg() {
+// SEND MESSAGE
+window.sendMessage = async function () {
+  const input = document.getElementById("messageInput");
+
+  if (!input.value.trim()) return;
+
   await addDoc(collection(db, "messages"), {
-    text: "Hello world",
+    text: input.value,
+    user: getUser(),
     time: Date.now()
   });
-}
+
+  input.value = "";
+};
+
+// REAL TIME LOAD
+const q = query(collection(db, "messages"), orderBy("time"));
+
+onSnapshot(q, (snapshot) => {
+  const chatBox = document.getElementById("chatBox");
+  chatBox.innerHTML = "";
+
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+
+    const msg = document.createElement("div");
+    msg.classList.add("msg");
+
+    msg.innerHTML = `
+      <div class="user">${data.user}</div>
+      ${data.text}
+    `;
+
+    chatBox.appendChild(msg);
+  });
+
+  chatBox.scrollTop = chatBox.scrollHeight;
+});
+</script>
